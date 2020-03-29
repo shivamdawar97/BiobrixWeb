@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:myapp/config/config.dart';
+import 'package:myapp/utils/MyMouseRegion.dart';
 import 'package:myapp/utils/responsive_builder.dart';
 import 'package:myapp/utils/screen_type.dart';
+
+typedef void OnProductWidgetHover(bool show,Offset position);
 
 class HeaderView extends StatelessWidget implements PreferredSizeWidget  {
   
@@ -84,23 +87,13 @@ _getWebUI() {
 }
 
 __getListWidget(int pos){
-  return GestureDetector(
-    onTap:() {},
-    child: Padding(
+   return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: MouseRegion(
-
-       child: widgets[pos],
-        onHover: (event) {
-       appContainer.style.cursor = 'pointer';
+      child: MyMouseRegion(child: widgets[pos],
+      onTap: (){
         
-      },
-      onExit: (event) {
-        appContainer.style.cursor = 'default';
-      },
-      ),
-    ),
-  );
+      },)
+    );
 }
 
 _getSearchView(bool isWeb){
@@ -160,20 +153,18 @@ class _ProductWidgetState extends State<_ProductWidget> {
   Widget build(BuildContext context) {
     return Stack(
           children: <Widget>[
-          MouseRegion(
+          MyMouseRegion(
           child: Row(
           key: _widgetKey,  
           children: <Widget>[
           Text('Product',style: TextStyle(fontSize: 18,color: _isHover?Colors.blue[400]:Colors.black)),
           Icon(Icons.arrow_drop_down,color:  _isHover?Colors.blue[400]:Colors.black,)
       ],),
-        onHover:(_) {
-          appContainer.style.cursor = 'pointer';
+        onEnter:() {
           showProductMenu(true);
           widget.onProductWidgetHover(true,_menuPosition);
         },
-        onExit: (_){
-          appContainer.style.cursor = 'default';
+        onExit: (){
           showProductMenu(false);
           widget.onProductWidgetHover(false,_menuPosition);
         },
@@ -189,5 +180,3 @@ class _ProductWidgetState extends State<_ProductWidget> {
   }
 
 }
-
-typedef void OnProductWidgetHover(bool show,Offset position);

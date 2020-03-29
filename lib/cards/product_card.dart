@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:myapp/config/config.dart';
 import 'package:myapp/models/product.dart';
+import 'package:myapp/utils/MyMouseRegion.dart';
 
 class ProductCard extends StatefulWidget {
 
@@ -65,20 +65,18 @@ class _ProductCardState extends State<ProductCard> with TickerProviderStateMixin
                 Text('₹ ${widget.product.price}',style: 
                 TextStyle(fontSize: 16,fontWeight: FontWeight.bold)),
 
-                MouseRegion(child: 
+                MyMouseRegion(child: 
                 FlatButton(child: Text('Add to cart'),
                 shape: RoundedRectangleBorder(side: BorderSide(color: Colors.red)),
                 onPressed: (){}),
-                onEnter: (_)=>appContainer.style.cursor = 'pointer',
-                onExit: (_)=>appContainer.style.cursor = 'default'),
+                ),
 
 
-                MouseRegion(child: 
+                MyMouseRegion(child: 
                 FlatButton(child: Text('Add to Wishlist'),
                 shape: RoundedRectangleBorder(side: BorderSide(color: Colors.red)),
                 onPressed: (){}),
-                onEnter: (_)=>appContainer.style.cursor = 'pointer',
-                onExit: (_)=>appContainer.style.cursor = 'default'),
+                ),
 
                 SizedBox(height: 10,)
 

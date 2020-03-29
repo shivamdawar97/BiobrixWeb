@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:myapp/models/product.dart';
+import 'package:myapp/pages/homeContents/home_contents.dart';
 import 'package:myapp/pages/homePage/homeRepository.dart';
 import 'package:myapp/utils/responsive_builder.dart';
 import 'package:myapp/utils/screen_type.dart';
-import 'package:myapp/utils/size_info.dart';
 import 'package:myapp/views/ViewPager.dart';
 import 'package:myapp/views/bottom_part.dart';
 import 'package:myapp/views/customer_says.dart';
@@ -31,20 +30,43 @@ class MyHomePage extends StatefulWidget {
 
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin{
 
   Future<List<HomeProduct>> futureProducts;
   List<HomeProduct> products;  
-
+  Animation<double> _scaleAnimation;
+  AnimationController _animController;
+  
   @override
   void initState() {
     super.initState();
     getProducts();
+    initAnimation();
+    _scrollController= ScrollController();
+
+    _scrollController.addListener(() { 
+      if(_scrollController.offset>30)
+         _animController.forward();
+      else _animController.reset();   
+    });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _scrollController.dispose();
+    _animController.dispose();
+  }
+
+  void initAnimation(){
+    _animController = AnimationController(duration: Duration(milliseconds: 200),vsync: this);
+    _scaleAnimation = new Tween(begin: 1.0,end: 0.0).animate(_animController);
 
   }
       
       @override
       Widget build(BuildContext context) {
+
         HeaderView headerView = HeaderView(parentContext: context,scaffoldKey: widget._scaffoldKey,
                       onProductWidgetHover: (show,offset)=> _setProductMenuState(show,offset));
        
@@ -52,29 +74,29 @@ class _MyHomePageState extends State<MyHomePage> {
           return Scaffold(
             key: widget._scaffoldKey,
             drawer: sizingInfo.deviceScreenType == DeviceScreenType.Mobile? SideDrawer():null,
-            body: Container(
-              decoration: BoxDecoration(image: DecorationImage(image: AssetImage('assets/web_bg.jpg'),fit: BoxFit.fill)),
-              child: SingleChildScrollView(    
-              controller: _scrollController,
-              scrollDirection: Axis.vertical,
-              child: Stack(
-                children: <Widget>[
-                Column(    
-                children: <Widget>[
-                        TopView(),
-                        headerView,
-                        ViewPager(),
-                        SkinTypeProductsView(screentype: sizingInfo.deviceScreenType),
-                        products==null? Container(): RecentProductsView(sizingInfo.deviceScreenType,products),
-                        CustomerSays(widget.repo.getTestimonies()),
-                        BottomView()
-                          ],),
-                        _showProductMenu? _getPositionedMenu():Container(),
-
-                ],
+            body: Column(children: <Widget>[
+              SizeTransition(sizeFactor: _scaleAnimation,child: TopView(),),
+              headerView,
+              Expanded(
+                flex: 1,
+                child: Container(
+                decoration: BoxDecoration(image: DecorationImage(image: AssetImage('assets/web_bg.jpg'),fit: BoxFit.fill)),
+                child: SingleChildScrollView(  
+                physics: ScrollPhysics(),    
+                controller: _scrollController,
+                scrollDirection: Axis.vertical,
+                child: Stack(
+                  overflow: Overflow.clip,
+                  children: <Widget>[
+                  HomeContents(products: products,tetimonies: widget.repo.getTestimonies(),sizingInfo: sizingInfo,),
+                  _showProductMenu? _getPositionedMenu():Container(),
+                  ],
+                ),
+                ),
+            ),
               ),
-              ),
-            )
+              
+            ],)
           );
         });
       }
@@ -92,7 +114,7 @@ class _MyHomePageState extends State<MyHomePage> {
     
     _getPositionedMenu(){
     return Positioned(
-        top: _menuPosition.dy + (_showAppbar ? _scrollController.offset-50 : 25) ,
+        top: _scrollController.offset -10 ,
         left: _menuPosition.dx+30,
         child: MouseRegion(
           child: Container(
@@ -111,15 +133,6 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
      );
     }
-    
-      _getRecentsView(SizingInformation info) {
-        return FutureBuilder<List<HomeProduct>>(
-          future: futureProducts,
-          builder: (ctx,snapshot){
-          if(snapshot.hasData) return RecentProductsView(info.deviceScreenType,snapshot.data);
-          else return Text('Loading...');
-        });
-      }
     
       void getProducts() async {
         final ps = await widget.repo.callApi();

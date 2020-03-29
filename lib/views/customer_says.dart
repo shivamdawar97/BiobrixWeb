@@ -20,14 +20,22 @@ class CustomerSays extends StatelessWidget {
     _myDotsIndicator = MyDotsIndicator(dots:testimonies.length,
    onSelected: (page) => scrollToPage(page.toDouble()));
    
-       return Container(child: Column(
+       return Container(
+         color: Color(0x66F167FA),
+         child: Column(
          children: <Widget>[
+           SizedBox(height: 30,),
            Center(child: Text('Testimonials',style: TextStyle(fontSize: 28))),
            Center(child: Container(height: 2,width: 100,color: Colors.black)),
-           SizedBox(height: 300,),
-           PageView.builder(itemBuilder: (ctx,pos){
+
+            Container(
+            margin: EdgeInsets.all(50),  
+            height: 300,  
+            child: 
+            PageView.builder(itemBuilder: (ctx,pos){
              return TestimonyCard(testimonies[pos]);
-             },itemCount: 3,controller: _pageController),
+             },itemCount: 3,controller: _pageController)),
+
 
           _myDotsIndicator 
          ],

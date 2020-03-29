@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/fa_icon.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:myapp/config/config.dart';
+import 'package:myapp/utils/MyMouseRegion.dart';
 import 'package:myapp/utils/responsive_builder.dart';
 import 'package:myapp/utils/screen_type.dart';
 
@@ -72,22 +73,13 @@ _getMobileUI(){
 }
 
 _getListWidget(int pos){
-  return GestureDetector(
-    onTap:() => _onItemClicked(pos),
-    child: Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: MouseRegion(
 
-       child: widgets[pos],
-        onHover: (event) {
-        appContainer.style.cursor = 'pointer';
-      },
-      onExit: (event) {
-        appContainer.style.cursor = 'default';
-      },
-      ),
-    ),
-  );
+  return Padding(padding: EdgeInsets.all(8.0),
+  child: MyMouseRegion(
+    child: widgets[pos],
+    onTap: ()=> _onItemClicked(pos),
+  ),);
+
 }
 
 _onItemClicked(int pos){
