@@ -63,7 +63,7 @@ class _SkinTypeProductsView extends State<SkinTypeProductsView> with TickerProvi
 
     _width = MediaQuery.of(context).size.width;
     return  Container(
-       color: Color(0x66F167FA),
+       //color: Color(0x66F167FA),
        child: Column(
        children: <Widget>[
        SizedBox(height: 30),

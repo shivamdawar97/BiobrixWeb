@@ -124,7 +124,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin{
           ),
           child: Column(children: <Widget>[
               FlatButton(onPressed: (){}, child: Text('Biobrix Products')),
-              FlatButton(onPressed: (){}, child: Text('Biobrix Haircare')),
+              FlatButton(onPressed: (){}, child: Text('DEMMACOS Products')),
               FlatButton(onPressed: (){}, child: Text('Professional Range')), 
             ],),
           ),
