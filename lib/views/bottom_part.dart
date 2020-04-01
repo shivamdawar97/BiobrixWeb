@@ -16,7 +16,7 @@ class BottomView extends StatelessWidget {
           SizedBox(width: 30,),
           Text('Copyright 2020 | All Rights Reserved | Biobrix',
           style: TextStyle(
-            color: Colors.grey[200]
+          color: Colors.grey[200]
           ),),
           Spacer(),
           FaIcon(FontAwesomeIcons.facebook),

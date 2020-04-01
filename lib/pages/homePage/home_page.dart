@@ -1,22 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:myapp/config/config.dart';
+import 'package:myapp/models/categoty.dart';
 import 'package:myapp/models/product.dart';
 import 'package:myapp/pages/homeContents/home_contents.dart';
 import 'package:myapp/pages/homePage/homeRepository.dart';
+import 'package:myapp/pages/productsPage/products_page.dart';
+import 'package:myapp/utils/MyMouseRegion.dart';
 import 'package:myapp/utils/responsive_builder.dart';
 import 'package:myapp/utils/screen_type.dart';
-import 'package:myapp/views/ViewPager.dart';
-import 'package:myapp/views/bottom_part.dart';
-import 'package:myapp/views/customer_says.dart';
 import 'package:myapp/views/drawer_view.dart';
 import 'package:myapp/views/header_view.dart';
-import 'package:myapp/views/recent_products_view.dart';
-import 'package:myapp/views/skin_type_view.dart';
 import 'package:myapp/views/top_view.dart';
 
-bool _showProductMenu = false;
-Offset _menuPosition;
+List<bool> _showMenu = [false,false];
+List<double> _menuPos = [0,0];
+
+
 ScrollController _scrollController;
-bool _showAppbar = false;
+bool _homeView = true;
+Widget _containerWidget;
+DeviceScreenType _screenType;
 
 class MyHomePage extends StatefulWidget {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -32,15 +35,17 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin{
 
-  Future<List<HomeProduct>> futureProducts;
-  List<HomeProduct> products;  
-  Animation<double> _scaleAnimation;
+  List<HomeProduct> _products;
+  List<Category> _categories;
+  Animation<double> _scaleAnimation,_scaleAnimation2;
   AnimationController _animController;
-  
+  List<Widget> _menus =[];
+
   @override
   void initState() {
     super.initState();
-    getProducts();
+    _getProducts();
+    _getCategories();
     initAnimation();
     _scrollController= ScrollController();
 
@@ -49,6 +54,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin{
          _animController.forward();
       else _animController.reset();   
     });
+
+    _menus.add(_getMenu(0));
+    _menus.add(Container());
   }
 
   @override
@@ -61,83 +69,118 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin{
   void initAnimation(){
     _animController = AnimationController(duration: Duration(milliseconds: 200),vsync: this);
     _scaleAnimation = new Tween(begin: 1.0,end: 0.0).animate(_animController);
+    _scaleAnimation2 = new Tween(begin: 1.0,end: 0.6).animate(_animController);
 
   }
       
       @override
       Widget build(BuildContext context) {
-
-        HeaderView headerView = HeaderView(parentContext: context,scaffoldKey: widget._scaffoldKey,
-                      onProductWidgetHover: (show,offset)=> _setProductMenuState(show,offset));
-       
+        
         return ResponsiveBuilder(builder: (context,sizingInfo){
+          _screenType = sizingInfo.deviceScreenType;
           return Scaffold(
             key: widget._scaffoldKey,
             drawer: sizingInfo.deviceScreenType == DeviceScreenType.Mobile? SideDrawer():null,
             body: Column(children: <Widget>[
               SizeTransition(sizeFactor: _scaleAnimation,child: TopView(),),
-              headerView,
+              SizeTransition(sizeFactor: _scaleAnimation2,child: HeaderView(context,scaffoldKey: widget._scaffoldKey,
+                onProductViewtHover: (show,dx)=> _setMenuState(show,0,dx: dx),
+                onProductRangetHover: (show,dx)=> _setMenuState(show,1,dx: dx),
+                screentype: sizingInfo.deviceScreenType,
+                ),),
               Expanded(
                 flex: 1,
                 child: Container(
                 decoration: BoxDecoration(image: DecorationImage(image: AssetImage('assets/web_bg.jpg'),fit: BoxFit.fill)),
-                child: SingleChildScrollView(  
-                physics: ScrollPhysics(),    
+                child: Stack(
+                 children: <Widget>[
+                   _homeView
+                ? SingleChildScrollView(  
                 controller: _scrollController,
                 scrollDirection: Axis.vertical,
                 child: Stack(
                   overflow: Overflow.clip,
                   children: <Widget>[
-                  HomeContents(products: products,tetimonies: widget.repo.getTestimonies(),sizingInfo: sizingInfo,),
-                  _showProductMenu? _getPositionedMenu():Container(),
+                    HomeContents(products: _products,tetimonies: widget.repo.getTestimonies(),sizingInfo: sizingInfo,),
                   ],
-                ),
-                ),
-            ),
+                ),)
+                : _containerWidget,
+                _showMenu[0]? _getPositionedMenu(0):Container(),
+                _showMenu[1]? _getPositionedMenu(1):Container(),
+                 ], 
+                )
               ),
-              
+              ),
             ],)
           );
         });
       }
                         
-    void _setProductMenuState(bool show,Offset position) {
-      _menuPosition = position;
+    void _setMenuState(bool show,int which,{double dx,double dy}) {
+      if(dx!=null) _menuPos[which] = dx; 
        setState(() {
-         _showProductMenu = show;
+         _showMenu[which] = show;
        });
     }
-    
-    // _getPoductsMenu(){
-    //  return OverlayEntry(builder: (context)=>_getPositionedMenu());
-    // }
-    
-    _getPositionedMenu(){
-    return Positioned(
-        top: _scrollController.offset -10 ,
-        left: _menuPosition.dx+30,
-        child: MouseRegion(
+
+    _getMenu(int pos) {
+      List<Widget> menu = [];
+      if(pos==0){
+        menu.add(FlatButton(onPressed: (){}, child: Text('Biobrix Products')));
+        menu.add(FlatButton(onPressed: (){}, child: Text('Demmacos Products')));
+        menu.add(FlatButton(onPressed: (){}, child: Text('Professional Range')));
+      } 
+      else {
+        _categories.asMap().forEach((i,element) =>
+          menu.add(FlatButton(onPressed: (){
+            appContainer.style.cursor = 'default';
+            _onCategoryClicked(i);
+          } , child: Text(element.name)))
+        );
+      }
+      return MyMouseRegion(
           child: Container(
           decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.all(Radius.circular(8))     
           ),
-          child: Column(children: <Widget>[
-              FlatButton(onPressed: (){}, child: Text('Biobrix Products')),
-              FlatButton(onPressed: (){}, child: Text('DEMMACOS Products')),
-              FlatButton(onPressed: (){}, child: Text('Professional Range')), 
-            ],),
+          child: Column(children: menu,)  
           ),
-          onHover: (_)=>_setProductMenuState(true,_menuPosition),
-          onExit: (_)=>_setProductMenuState(false,_menuPosition),
-        ),
+          onEnter: ()=> _setMenuState(true,pos),
+          onExit: ()=> _setMenuState(false,pos),
+        );
+    }
+
+    _getPositionedMenu(int pos){
+    return Positioned(
+        top: _scrollController.hasClients? _scrollController.offset: 0,
+        left: _menuPos[pos],
+        child: _menus[pos],
      );
     }
     
-      void getProducts() async {
-        final ps = await widget.repo.callApi();
-        if(ps!=null) setState((){products=ps;});
-      }
+    void _getProducts() async {
+      final ps = await widget.repo.callApi();
+      if(ps!=null) setState((){_products=ps;});
+    }
+
+    void _getCategories() async {
+      final cats = await widget.repo.getCategories();
+      if(cats!=null) {
+        _categories = cats;
+        _menus[1]= _getMenu(1);
+      };
+    }
+
+    void _onCategoryClicked(int pos){
+        _setMenuState(false, 1);
+        _containerWidget = ProductsPage(_categories,pos,onCategorySelected: (pos){
+          _onCategoryClicked(pos);
+        },);
+        setState(() {
+          _homeView = false;
+        });
+    }
 
 }
 

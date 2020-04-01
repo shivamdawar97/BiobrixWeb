@@ -1,40 +1,62 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:myapp/config/config.dart';
 import 'package:myapp/utils/MyMouseRegion.dart';
-import 'package:myapp/utils/responsive_builder.dart';
 import 'package:myapp/utils/screen_type.dart';
 
-typedef void OnProductWidgetHover(bool show,Offset position);
+typedef void OnWidgetHover(bool show,double position);
 
-class HeaderView extends StatelessWidget implements PreferredSizeWidget  {
-  
-  final BuildContext parentContext;
-  final GlobalKey<ScaffoldState> scaffoldKey;
-  HeaderView({
-    this.parentContext,
-    this.scaffoldKey,
-    this.onProductWidgetHover
-  });
-  final OnProductWidgetHover onProductWidgetHover;
-
-  final widgets = <Widget>[
-    Text('About Us',style: TextStyle(fontSize: 18),),
-    Text('Trade Enquiry',style: TextStyle(fontSize: 18)),
-    Text('Contact Us',style: TextStyle(fontSize: 18))
+int _hoverPos = -1;
+final _widgetsNames = [
+    'About Us','Products','Products Range','Trade Inquiry','Contact Us'
   ];
 
+class HeaderView extends StatefulWidget implements PreferredSizeWidget  {
 
+  const HeaderView(this.parentContext,{
+    this.scaffoldKey,
+    this.onProductViewtHover,
+    this.onProductRangetHover,
+    this.screentype
+  });
+
+  final BuildContext parentContext;
+  final GlobalKey<ScaffoldState> scaffoldKey;
+  final DeviceScreenType screentype;
+  final OnWidgetHover onProductViewtHover;
+  final OnWidgetHover onProductRangetHover;
+
+  @override
+  State<StatefulWidget> createState() => _HeaderViewState();
+
+   @override
+  Size get preferredSize{
+    var mediaQuery = MediaQuery.of(parentContext);
+    return mediaQuery.size;
+  }
+}
+
+
+class _HeaderViewState extends State<HeaderView>  {
+  
+  final _dropDownKey1 = GlobalKey();
+  final _dropDownKey2 = GlobalKey();
+  double _x1,_x2;
+
+
+  void _getDropDownPositions(){
+
+    final box1 = _dropDownKey1.currentContext.findRenderObject() as RenderBox;
+    final box2 = _dropDownKey2.currentContext.findRenderObject() as RenderBox;
+    final pos = box1.localToGlobal(Offset.zero);
+    _x1 = pos.dx;
+    _x2 = box2.localToGlobal(Offset.zero).dx;
+
+  }
 
   @override
   Widget build(BuildContext context) {
-    
-    return ResponsiveBuilder(
-      builder: (context,sizingInfo){
-        return sizingInfo.deviceScreenType == DeviceScreenType.Desktop? _getWebUI() : _getMobileUI();
-      },
-    );
+    return widget.screentype == DeviceScreenType.Desktop? _getWebUI() : _getMobileUI();
   }
                     
 _getMobileUI() {
@@ -46,11 +68,10 @@ return Container(
         children: <Widget>[
             IconButton(
               icon: Icon(Icons.menu),
-              onPressed: () => scaffoldKey.currentState.openDrawer()
+              onPressed: () => widget.scaffoldKey.currentState.openDrawer()
             ),
             SizedBox(width: 5,),
-            Text('BIOBRIX',
-            style: GoogleFonts.actor(fontSize: 22.0,fontWeight: FontWeight.bold)
+            Text('BIOBRIX',style: GoogleFonts.actor(fontSize: 22.0,fontWeight: FontWeight.bold)
             ),
             Spacer(flex: 1,),
             _getSearchView(false),
@@ -65,20 +86,21 @@ _getWebUI() {
 
   return Container(
     decoration: BoxDecoration(color: Colors.white),
-    padding: EdgeInsets.fromLTRB(30, 10, 30, 10),
+    padding: EdgeInsets.fromLTRB(50, 0, 30, 0),
     child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
-            Text('BIOBRIX',
-            style:GoogleFonts.sourceSerifPro(fontSize: 44.0,fontWeight: FontWeight.bold)
-            ),
-            SizedBox(width: 20,),
+            Container(
+              padding: EdgeInsets.only(top: 5,bottom: 5),
+              width: 150,height: 100,
+              child: Image.asset('assets/logo.png',fit: BoxFit.fill,),),
             __getListWidget(0),
-            _ProductWidget(onProductWidgetHover: onProductWidgetHover,),
             __getListWidget(1),
             __getListWidget(2),
+            __getListWidget(3),
+            __getListWidget(4),
             _getSearchView(true),
-            SizedBox(width: 20,)
+            SizedBox(width: 1,)
         ],
 
     ),
@@ -87,13 +109,35 @@ _getWebUI() {
 }
 
 __getListWidget(int pos){
-   return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: MyMouseRegion(child: widgets[pos],
+  final textView = Text(_widgetsNames[pos],style: TextStyle(fontSize: 18,color: pos==_hoverPos ?Colors.blue[400]:Colors.black));
+   return Container(
+      height: 100,
+      key: pos==1?_dropDownKey1: pos==2? _dropDownKey2 : null,
+      child: MyMouseRegion(child: 
+      Center(child: (pos==1 || pos==2) 
+        ? Row(children: <Widget>[textView,Icon(Icons.arrow_drop_down)],)
+        : textView
+      ),
       onTap: (){
         
-      },)
-    );
+      },
+      onEnter: (){
+          if(pos==1) {
+            _getDropDownPositions();
+            widget.onProductViewtHover(true,_x1);
+          }
+          else if(pos==2) {
+            _getDropDownPositions();
+            widget.onProductRangetHover(true,_x2);
+          }
+          _setHoverPosition(pos);
+      },
+      onExit: (){
+          if(pos==1) widget.onProductViewtHover(false,_x1);
+          else if(pos==2) widget.onProductRangetHover(false,_x2);
+          _setHoverPosition(-1);
+      },
+      ));
 }
 
 _getSearchView(bool isWeb){
@@ -113,70 +157,11 @@ _getSearchView(bool isWeb){
       );
   }
 
-
-  @override
-  Size get preferredSize{
-    var mediaQuery = MediaQuery.of(parentContext);
-    return mediaQuery.size;
-  }
-
-} 
-
-class _ProductWidget extends StatefulWidget {
-  _ProductWidget({
-    @required this.onProductWidgetHover
-  });
-  final OnProductWidgetHover onProductWidgetHover;
-
-  @override
-  State<StatefulWidget> createState() => _ProductWidgetState();
-
-}
-
-class _ProductWidgetState extends State<_ProductWidget> {
-  
-  final GlobalKey _widgetKey = GlobalKey();
-  
-  Offset _menuPosition;
-  bool _isHover = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) { 
-       RenderBox _wid = _widgetKey.currentContext.findRenderObject();
-    _menuPosition = _wid.localToGlobal(Offset.zero);
-     });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-          children: <Widget>[
-          MyMouseRegion(
-          child: Row(
-          key: _widgetKey,  
-          children: <Widget>[
-          Text('Product',style: TextStyle(fontSize: 18,color: _isHover?Colors.blue[400]:Colors.black)),
-          Icon(Icons.arrow_drop_down,color:  _isHover?Colors.blue[400]:Colors.black,)
-      ],),
-        onEnter:() {
-          showProductMenu(true);
-          widget.onProductWidgetHover(true,_menuPosition);
-        },
-        onExit: (){
-          showProductMenu(false);
-          widget.onProductWidgetHover(false,_menuPosition);
-        },
-        ),
-  ],
-    );
-  }
-
-  showProductMenu(bool show){
+ _setHoverPosition(int pos){
       setState(() {
-        _isHover = show;
+        _hoverPos = pos;
       });
   }
+
 
 }

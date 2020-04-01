@@ -1,4 +1,6 @@
 import 'package:myapp/API/home_products.dart';
+import 'package:myapp/API/categoryNames.dart' as categoryApi;
+import 'package:myapp/models/categoty.dart';
 import 'package:myapp/models/product.dart';
 import 'package:myapp/models/testimony.dart';
 
@@ -24,5 +26,10 @@ class HomeRepository {
 
     return testimonies;
   }
+
+  Future<List<Category>> getCategories() {
+    return categoryApi.getCategories();
+  }
+  
 
 }

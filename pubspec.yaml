@@ -56,6 +56,7 @@ flutter:
   assets:
     - assets/bg.jpg
     - assets/web_bg.svg
+    - assets/logo.png
     - assets/web_bg.jpg
 
   # An image asset can refer to one or more resolution-specific "variants", see

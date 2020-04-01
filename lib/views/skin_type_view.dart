@@ -28,7 +28,7 @@ var _hoverPos = -1;
 
 class SkinTypeProductsView extends StatefulWidget {
 
-  SkinTypeProductsView({
+  const SkinTypeProductsView({
     @required this.screentype 
   });
 
@@ -37,7 +37,6 @@ class SkinTypeProductsView extends StatefulWidget {
   @override
   _SkinTypeProductsView createState() => _SkinTypeProductsView();
 
-  
 
 }
 
